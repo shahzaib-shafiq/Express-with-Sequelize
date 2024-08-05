@@ -1,3 +1,24 @@
+const { Sequelize, DataTypes } = require("sequelize");
+
+const sequelize = new Sequelize(
+  "student_db",
+  "DATABASE_USERNAME",
+  "DATABASE_PASSWORD",
+  {
+    host: "DATABASE_HOST",
+    dialect: "mysql",
+  }
+);
+
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log("Connection has been established successfully.");
+  })
+  .catch((error) => {
+    console.error("Unable to connect to the database: ", error);
+  });
+
 const Student = sequelize.define("students", {
   student_id: {
     type: DataTypes.UUID,
@@ -9,7 +30,6 @@ const Student = sequelize.define("students", {
     allowNull: false,
   },
 });
-
 const Grade = sequelize.define("grades", {
   grade: {
     type: DataTypes.INTEGER,
@@ -27,34 +47,8 @@ const student_data = [
   { name: "Sam Lewis", gradeId: 1 },
 ];
 
-sequelize
-  .sync({ force: true })
-  .then(() => {
-    Grade.bulkCreate(grade_data, { validate: true })
-      .then(() => {
-        Student.bulkCreate(student_data, { validate: true })
-          .then(() => {})
-          .catch((err) => {
-            console.log(err);
-          });
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  })
-  .catch((error) => {
-    console.error("Unable to create the table : ", error);
-  });
+Grade.hasMany(Student);
 
-//   one-to-one relationship: A one-to-one relationship means a record in one table is associated with exactly one record in another table. In terms of Sequelize, you can use belongsTo() and hasOne() associations to create this type of relationship.
-
-//   one-to-many relationship: A one-to-many relationship means a record in one table is associated with multiple records in another table. With Sequelize, you can use hasMany() associations methods to create this type of relationship.
-
-//   many-to-many relationship: A many-to-many relationship means multiple records in one table are associated with multiple records in another table. With Sequelize, you can use belongsToMany() associations to create this type of relationship.
-
-Student.belongsTo(Grade);
-
-//finding student data using grade
 sequelize
   .sync({ force: true })
   .then(() => {
@@ -62,15 +56,18 @@ sequelize
       .then(() => {
         Student.bulkCreate(student_data, { validate: true })
           .then(() => {
-            Student.findAll({
+            Grade.findAll({
+              where: {
+                grade: 9,
+              },
               include: [
                 {
-                  model: Grade,
+                  model: Student,
                 },
               ],
             })
               .then((result) => {
-                console.log(result);
+                console.dir(result, { depth: 5 });
               })
               .catch((error) => {
                 console.error("Failed to retrieve data : ", error);
@@ -85,12 +82,12 @@ sequelize
       });
   })
   .catch((error) => {
-    console.error("Unable to create the table : ", error);
+    console.error("Unable to create table : ", error);
   });
 
-//The complete code
+//complete code:
 
-// const {Sequelize, DataTypes} = require("sequelize");
+//   const {Sequelize, DataTypes} = require("sequelize");
 
 // const sequelize = new Sequelize(
 //    'student_db',
@@ -101,6 +98,7 @@ sequelize
 //       dialect: 'mysql'
 //     }
 //   );
+
 // sequelize.authenticate().then(() => {
 //    console.log('Connection has been established successfully.');
 // }).catch((error) => {
@@ -118,7 +116,6 @@ sequelize
 //        allowNull: false
 //    }
 // });
-
 // const Grade = sequelize.define("grades", {
 //    grade: {
 //        type: DataTypes.INTEGER,
@@ -126,7 +123,7 @@ sequelize
 //    }
 // });
 
-// const grade_data = [{grade : 9}, {grade : 10}, {grade : 11}]
+// const grade_data = [ {grade : 9}, {grade : 10}, {grade : 11}]
 
 // const student_data = [
 //    {name : "John Baker", gradeId: 2},
@@ -136,23 +133,26 @@ sequelize
 //    {name : "Sam Lewis", gradeId: 1}
 // ]
 
-// // One-To-One association
-// Student.belongsTo(Grade);
+// // One-To-Many relationship
+// Grade.hasMany(Student);
 
 // sequelize.sync({ force: true }).then(() => {
 //    Grade.bulkCreate(grade_data, { validate: true }).then(() => {
 //        Student.bulkCreate(student_data, { validate: true }).then(() => {
-//            Student.findAll({
+//            Grade.findAll({
+//                where: {
+//                    grade: 9
+//                },
 //                include: [{
-//                    model: Grade
+//                    model: Student
 //                }]
 //            }).then(result => {
-//                console.log(result)
+//                console.dir(result, { depth: 5 });
 //            }).catch((error) => {
 //                console.error('Failed to retrieve data : ', error);
 //            });
 //        }).catch((err) => { console.log(err); });
 //    }).catch((err) => { console.log(err); });
 // }).catch((error) => {
-//    console.error('Unable to create the table : ', error);
+//    console.error('Unable to create table : ', error);
 // });
